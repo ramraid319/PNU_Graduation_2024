@@ -2,7 +2,7 @@
 
 1. SUMO(Simulation of Urban MObility)를 설치 <https://sumo.dlr.de/docs/Downloads.php>
 
-2. control_cross_signal 폴더 통째로 다운받기
+2. control_cross_signal.zip 다운받고 압축해제
 
 3. 해당 폴더에서 명령프롬프트 실행 후 -> python control_traffic_lights.py 실행
 

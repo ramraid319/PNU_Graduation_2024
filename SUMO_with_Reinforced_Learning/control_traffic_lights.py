@@ -97,8 +97,8 @@ def generateRandomRoutes2():
     vehicle_types = ["CarA", "CarB", "CarC", "CarD", "bus", "passenger", "taxi", "police", "emergency", "rail", "truck", "delivery", "passenger/hatchback", "passenger/sedan", "passenger/wagon", "passenger/van"]
     # ped_vehicle_types = ["ped0", "ped1", "ped2", "ped3", "ped4", "ped5"]
 
-    min_vehicles_per_route = 25    #50   각 루트별 최소 차량 수
-    max_vehicles_per_route = 75    #150   각 루트별 최대 차량 수     --> 이 두 값을 올리면 전체적으로 시뮬레이션에 더 많은 차량이 생성될 확률이 발생
+    min_vehicles_per_route = 20 #25    #50   각 루트별 최소 차량 수
+    max_vehicles_per_route = 40  #75    #150   각 루트별 최대 차량 수     --> 이 두 값을 올리면 전체적으로 시뮬레이션에 더 많은 차량이 생성될 확률이 발생
 
     # min_pedestrian_per_route = 15   
     # max_pedestrian_per_route = 40 
@@ -149,10 +149,13 @@ def generateRandomRoutes2():
     # Generate vehicles(cars)
     vehicle_id = 0
     for j, route in enumerate(routes):
-        total_vehicles = random.randint(min_vehicles_per_route, max_vehicles_per_route)
+        if j == 5 or j == 11:
+            total_vehicles = random.randint(240, 340)
+        else:
+            total_vehicles = random.randint(min_vehicles_per_route, max_vehicles_per_route)
         for _ in range(total_vehicles):
             vehicle_type = random.choice(vehicle_types)
-            depart_time = random.uniform(0, 900)  # 0초부터 900초 사이의 임의 시간에 출발
+            depart_time = random.uniform(0, 2000)  # 0초부터 900초 사이의 임의 시간에 출발
             vehicles.append((depart_time, f'    <vehicle id="veh{vehicle_id}" type="{vehicle_type}" route="r_{j}" depart="{depart_time:.2f}" />\n'))
             vehicle_id += 1
     # # Generate vehicles(pedestrians)

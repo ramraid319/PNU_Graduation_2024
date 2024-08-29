@@ -1,4 +1,4 @@
-from control_traffic_lights import calculateReward, generateRandomRoutes2, getEachLaneWaitingStats, printWaitingStats, setSig
+from control_traffic_lights import calculateReward, generateRandomRoutes2, getEachLaneWaitingStats, setSig
 import traci
 import os
 import sumolib
@@ -47,16 +47,16 @@ class SumoEnv:
         logic = program[0]    # 신호등의 현재 논리(제어 방식)를 가져옴
         
         if action == 0:
-            duration = logic.phases[0].duration + 0.5 if logic.phases[0].duration < 25 else logic.phases[0].duration
+            duration = logic.phases[0].duration + 0.5 if logic.phases[0].duration < 100 else logic.phases[0].duration
             setSig(tlsID, 0, duration)
         elif action == 1:
-            duration = logic.phases[2].duration + 0.5 if logic.phases[2].duration < 25 else logic.phases[2].duration
+            duration = logic.phases[2].duration + 0.5 if logic.phases[2].duration < 100 else logic.phases[2].duration
             setSig(tlsID, 2, duration)
         elif action == 2:
-            duration = logic.phases[4].duration + 0.5 if logic.phases[4].duration < 25 else logic.phases[4].duration
+            duration = logic.phases[4].duration + 0.5 if logic.phases[4].duration < 100 else logic.phases[4].duration
             setSig(tlsID, 4, duration)       
         elif action == 3:
-            duration = logic.phases[6].duration + 0.5 if logic.phases[6].duration < 25 else logic.phases[6].duration
+            duration = logic.phases[6].duration + 0.5 if logic.phases[6].duration < 100 else logic.phases[6].duration
             setSig(tlsID, 6, duration)      
         elif action == 4:
             duration = logic.phases[0].duration - 0.5 if logic.phases[0].duration > 3 else logic.phases[0].duration
@@ -70,6 +70,8 @@ class SumoEnv:
         elif action == 7:
             duration = logic.phases[6].duration - 0.5 if logic.phases[6].duration > 3 else logic.phases[6].duration
             setSig(tlsID, 6, duration)    
+        elif action == 8:
+            pass
         
         print(logic.phases[0].duration, logic.phases[1].duration, logic.phases[2].duration, logic.phases[3].duration, logic.phases[4].duration, logic.phases[5].duration, logic.phases[6].duration, logic.phases[7].duration) 
         
@@ -124,7 +126,7 @@ class SumoEnv:
         global stop_simulation
         step = traci.simulation.getTime()
         
-        if step <= 600 and not stop_simulation:
+        if step <= 2000 and not stop_simulation:
             return False
         else:
             return True

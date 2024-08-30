@@ -114,7 +114,7 @@ class DQNAgent:
         self.epsilon = epsilon_start   # 0.1
         self.buffer_size = 50000   # 10000
         self.batch_size =  64  #32
-        self.action_size = 9  # <-- 2
+        self.action_size = 4  # <-- 2
 
         self.replay_buffer = ReplayBuffer(self.buffer_size, self.batch_size)
         self.qnet = QNet(self.action_size).float().to(device)
@@ -178,7 +178,7 @@ class DQNAgent:
 episodes = 1000
 sync_interval = 20
 # env = gym.make('CartPole-v1')
-env = sumo.make('cross.sumocfg', 'sumo-gui')   # <-- [두번째 파라미터] : sumo를 cli버전으로 실행하려면 'sumo'로,  gui버전으로 실행하려면 'sumo-gui'로 설정
+env = sumo.make('cross.sumocfg', 'sumo')   # <-- [두번째 파라미터] : sumo를 cli버전으로 실행하려면 'sumo'로,  gui버전으로 실행하려면 'sumo-gui'로 설정
 agent = DQNAgent()
 reward_history = []
 

@@ -341,7 +341,7 @@ def calculateReward():
 
 # TraCI 인터페이스를 사용하여 진행중인 시뮬레이션의 신호등 신호길이를 실시간으로 변경하는 함수
 # tlsID : 신호등 ID,  phaseIndex : 해당 신호등의 신호 phase 중 하나(e.g. 0~7 중 하나), duration : 해당 신호 phase에 적용할 새로운 신호길이(sec)
-def setSig(tlsID, phaseIndex, duration):
+def setSig1(tlsID, phaseIndex, duration):
     ## define function that sets traffic signal of traffic light with id 'tlsID' to given parameters ##
     
     # tlsID = traci.trafficlight.getIDList()[0]  # 첫 번째 신호등(현 케이스: 교차로에 존재하는 유일한 신호등)의 ID를 가져옴
@@ -359,7 +359,10 @@ def setSig(tlsID, phaseIndex, duration):
     traci.trafficlight.setProgramLogic(tlsID, logic)  # 변경된 논리를 다시 설정함
     return
 
-
+# TraCI 인터페이스를 사용하여 진행중인 시뮬레이션의 신호등 현 신호단계를 실시간으로 다른 신호단계로 변경하는 함수
+def setSig2(tlsID, phaseIndex):
+    traci.trafficlight.setPhase(tlsID, phaseIndex)
+    return
 
 
             

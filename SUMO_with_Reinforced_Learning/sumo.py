@@ -36,8 +36,6 @@ class SumoEnv:
         next_state = self.get_state()
         next_state = np.append(next_state, self.get_state())
         next_state = np.append(next_state, self.get_state())
-        next_state = np.append(next_state, self.get_state())
-        next_state = np.append(next_state, self.get_state())
         
         return next_state
 
@@ -152,23 +150,16 @@ class SumoEnv:
         
         print(f'{phasesStr[self.prev_action]} ==> {phasesStr[action]}')
         self.prev_action = action        
-        
+
+
         traci.simulationStep()
+        traci.simulationStep()
+        traci.simulationStep()
+
         next_state = self.get_state()
-        
         traci.simulationStep()
-        traci.simulationStep()
-        next_state = np.append(next_state, self.get_state())
 
-        traci.simulationStep()
-        traci.simulationStep()
         next_state = np.append(next_state, self.get_state())
-
-        traci.simulationStep()
-        traci.simulationStep()
-        next_state = np.append(next_state, self.get_state())
-
-        traci.simulationStep()
         traci.simulationStep()
         next_state = np.append(next_state, self.get_state())
         

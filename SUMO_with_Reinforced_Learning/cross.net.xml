@@ -188,14 +188,14 @@
     </edge>
 
     <tlLogic id="6" type="static" programID="0" offset="0">
-        <phase duration="19.5" state="GGGrGrrrGGGrGrrrrGrG"/>  <!-- 39 -->
-        <phase duration="1.5"  state="GyyrGrrrGyyrGrrrryry"/>  <!-- 3 -->
-        <phase duration="7.5" state="GrrGGrrrGrrGGrrrrrrr"/>  <!-- 15 -->
-        <phase duration="1.5"  state="GrryGrrrGrryGrrrrrrr"/>  <!-- 3 -->
-        <phase duration="19.5" state="GrrrGGGrGrrrGGGrGrGr"/>  <!-- 39 -->
-        <phase duration="1.5"  state="GrrrGyyrGrrrGyyryryr"/>  <!-- 3 -->
-        <phase duration="7.5" state="GrrrGrrGGrrrGrrGrrrr"/>  <!-- 15 --> 
-        <phase duration="1.5"  state="GrrrGrryGrrrGrryrrrr"/>  <!-- 3 --> <!-- total: 120s => 60s -->
+        <phase duration="20" state="GGGrGrrrGGGrGrrrrGrG"/>  <!--19.5 39 -->
+        <phase duration="20"  state="GyyrGrrrGyyrGrrrryry"/>  <!--1.5 3 -->
+        <phase duration="20" state="GrrGGrrrGrrGGrrrrrrr"/>  <!--7.5 15 -->
+        <phase duration="20"  state="GrryGrrrGrryGrrrrrrr"/>  <!--1.5 3 -->
+        <phase duration="20" state="GrrrGGGrGrrrGGGrGrGr"/>  <!--19.5 39 -->
+        <phase duration="20"  state="GrrrGyyrGrrrGyyryryr"/>  <!--1.5 3 -->
+        <phase duration="20" state="GrrrGrrGGrrrGrrGrrrr"/>  <!--7.5 15 --> 
+        <phase duration="20"  state="GrrrGrryGrrrGrryrrrr"/>  <!--1.5 3 --> <!-- total: 120s => 60s -->
     </tlLogic>
 
     <junction id="1" type="dead_end" x="0.00" y="100.00" incLanes="L11_0 L11_1 L11_2 L11_3" intLanes="" shape="0.00,100.00 0.00,111.60 0.00,100.00"/>

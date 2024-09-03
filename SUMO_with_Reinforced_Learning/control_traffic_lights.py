@@ -97,8 +97,8 @@ def generateRandomRoutes2():
     vehicle_types = ["CarA", "CarB", "CarC", "CarD", "bus", "passenger", "taxi", "police", "emergency", "rail", "truck", "delivery", "passenger/hatchback", "passenger/sedan", "passenger/wagon", "passenger/van"]
     # ped_vehicle_types = ["ped0", "ped1", "ped2", "ped3", "ped4", "ped5"]
 
-    min_vehicles_per_route = 20 #25    #50   각 루트별 최소 차량 수
-    max_vehicles_per_route = 40  #75    #150   각 루트별 최대 차량 수     --> 이 두 값을 올리면 전체적으로 시뮬레이션에 더 많은 차량이 생성될 확률이 발생
+    min_vehicles_per_route = 30 #25    #50   각 루트별 최소 차량 수
+    max_vehicles_per_route = 50  #75    #150   각 루트별 최대 차량 수     --> 이 두 값을 올리면 전체적으로 시뮬레이션에 더 많은 차량이 생성될 확률이 발생
 
     # min_pedestrian_per_route = 15   
     # max_pedestrian_per_route = 40 
@@ -150,7 +150,7 @@ def generateRandomRoutes2():
     vehicle_id = 0
     for j, route in enumerate(routes):
         if j == 5 or j == 11:
-            total_vehicles = random.randint(240, 340)
+            total_vehicles = random.randint(80, 120)
         else:
             total_vehicles = random.randint(min_vehicles_per_route, max_vehicles_per_route)
         for _ in range(total_vehicles):
@@ -224,7 +224,7 @@ def getEachLaneWaitingStats(junction_id):
 
     spent_duration = traci.trafficlight.getSpentDuration(tlsID)
 
-    waiting_stats.extend([current_phase, assumed_time_next_switch, spent_duration])    
+    waiting_stats.extend([current_phase, spent_duration])    
     
     
     program = traci.trafficlight.getAllProgramLogics(tlsID)
@@ -233,7 +233,7 @@ def getEachLaneWaitingStats(junction_id):
     phases = logic.getPhases()
     durations = [phase.duration for phase in phases]   # 현재시점 각 phase별 duration들만 들어간 배열
     
-    waiting_stats.extend(durations)
+    ## waiting_stats.extend(durations)  
 
     laneNo = 0
     for lane_id in lane_ids:
@@ -270,14 +270,14 @@ def getEachLaneWaitingStats(junction_id):
             # laneNo,  # 차로번호(여기선 임의로 0에서 카운트업)
             total_vehicle_count_on_lane,  # lane상의 전체 차량 수
             waiting_vehicle_count,  # lane상의 대기(정지) 차량 수
-            round(avg_speed,2),   # lane상 모든 차량의 평균 속도
-            round(avg_acceleration,2) # lane상 모든 차량의 평균 가속도
+            round(avg_speed,4),   # lane상 모든 차량의 평균 속도
+            # round(avg_acceleration,2) # lane상 모든 차량의 평균 가속도
             # 'average_waiting_time': average_waiting_time, # 해당 차로 평균 차량 대기시간
             # 'max_waiting_time': max_waiting_time, # 해당 차로 최대 차량 대기시간
         ])
         laneNo += 1
     
-    return waiting_stats
+    return waiting_stats  # state배열 길이 : 2 + 12 * 3 = 2 + 36 = 38
 
 
 # reward를 계산합니다
@@ -301,7 +301,7 @@ def calculateReward():
         for vehicle in vehicles:
             sum_speed += traci.vehicle.getSpeed(vehicle)
             waiting_time = traci.vehicle.getWaitingTime(vehicle)
-            total_waiting_time += (1.0001) ** (waiting_time)
+            total_waiting_time += waiting_time   ## = (1.0001) ** (waiting_time)
             speed = traci.vehicle.getSpeed(vehicle)
             if speed < 0.1:  # 차량이 멈춘 상태로 간주 (속도가 0.1 미만)
                 waiting_vehicle_count += 1

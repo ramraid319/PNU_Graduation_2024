@@ -9,8 +9,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-epsilon_start = 0.3
-epsilon_end = 0.05
+epsilon_start = 0.9
+epsilon_end = 0.1
 epsilon_decay = 0.995
 
 cuda_available = torch.cuda.is_available()
@@ -66,7 +66,7 @@ class QNet(nn.Module):
         
         
         # Reduced model complexity for better performance and stability
-        self.l1 = nn.Linear(295, 512)   # Input size: 295, reduced hidden layer size
+        self.l1 = nn.Linear(114, 512)   # Input size: 38 x 3 = 114, reduced hidden layer size
         self.bn1 = nn.BatchNorm1d(512)  # Batch normalization after the first layer
         self.l2 = nn.Linear(512, 512)
         self.bn2 = nn.BatchNorm1d(512)  # Batch normalization after the second layer
@@ -178,7 +178,7 @@ class DQNAgent:
 episodes = 1000
 sync_interval = 20
 # env = gym.make('CartPole-v1')
-env = sumo.make('cross.sumocfg', 'sumo')   # <-- [두번째 파라미터] : sumo를 cli버전으로 실행하려면 'sumo'로,  gui버전으로 실행하려면 'sumo-gui'로 설정
+env = sumo.make('cross.sumocfg', 'sumo-gui')   # <-- [두번째 파라미터] : sumo를 cli버전으로 실행하려면 'sumo'로,  gui버전으로 실행하려면 'sumo-gui'로 설정
 agent = DQNAgent()
 reward_history = []
 

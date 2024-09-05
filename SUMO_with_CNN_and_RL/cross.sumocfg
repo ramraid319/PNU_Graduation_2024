@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<configuration>
+    <input>
+        <net-file value="cross.net.xml"/>
+        <route-files value="random_routes.rou.xml"/>
+    </input>
+    <time>
+        <begin value="0"/>
+        <end value=" 2005"/>
+    </time>
+</configuration>

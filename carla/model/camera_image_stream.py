@@ -84,7 +84,9 @@ class IntersectionMonitor:
         """Process the image from the camera and store it."""
         i = np.array(image.raw_data)
         i2 = i.reshape((self.im_height, self.im_width, 4))
-        i3 = i2[:, :, :3]
+        i3 = i2[:, :, :3]  # RGB 값 추출
+        i3 = cv2.cvtColor(i3, cv2.COLOR_BGR2GRAY)  # 필요하다면 흑백 이미지로 변환
+        i3 = i3 / 255.0  # 정규화
         self.camera_images[camera_index] = i3
 
     def reset(self):
@@ -176,8 +178,8 @@ class DQNAgent:
 
     def update(self, state, action, reward, next_state, done):
         self.replay_buffer.add(state, action, reward, next_state, done)
-        if len(self.replay_buffer) < self.batch_size:
-            return
+        if len(self.replay_buffer) > MIN_REPLAY_BUFFER:
+            agent.update(state, action, reward, next_state, done)
 
         state, action, reward, next_state, done = self.replay_buffer.get_batch()
         qs = self.qnet(state)
@@ -224,10 +226,17 @@ if __name__ == "__main__":
     reward_history = []
 
     for episode in range(EPISODES):
+        if episode % 10 == 0:  # 10 에피소드마다 타겟 네트워크 동기화
+            agent.sync_qnet()
         images = monitor.get_camera_images()
-        done = False
-        total_reward = 0
-        state = monitor
+        
+        # 이미지를 하나의 state로 변환
+        if all(img is not None for img in images):  # 모든 카메라에서 이미지가 받아진 경우에만
+            state = np.concatenate([img.flatten() for img in images])
+            action = agent.get_action(state)
+            # Action을 환경에 적용하고, 그에 따른 보상을 계산해야 합니다.
+        else:
+            continue  # 이미지가 제대로 수신되지 않았다면 스킵
 
     # Run the monitoring for a certain time
     try:

@@ -69,16 +69,15 @@ class carlaEnv:
             idx = idx + 1
             print(f"\t\t>> '{traffic_light_actor}' : set red time '{traffic_light_actor.get_red_time()}' --> '{list_red_time[idx]}'")
     
-    def setTrafficLightListGreen(self, list_target_traffic_light_actor):
-        for traffic_light_actor in list_target_traffic_light_actor:
+    def setTrafficLightGroupGreen(self, target_actor):
+        target_group = target_actor.get_group_traffic_lights()
+        for traffic_light_actor in target_group:
             traffic_light_actor.set_state(carla.TrafficLightState.Green)
-            print(f"\t\t>> '{traffic_light_actor}' : set green")
-            
-    
-    def setTrafficLightListRed(self, list_target_traffic_light_actor):
-        for traffic_light_actor in list_target_traffic_light_actor:
+
+    def setTrafficLightGroupRed(self, target_actor):
+        target_group = target_actor.get_group_traffic_lights()
+        for traffic_light_actor in target_group:
             traffic_light_actor.set_state(carla.TrafficLightState.Red)
-            print(f"\t\t>> '{traffic_light_actor}' : set red")
     
     def allGreen(self):
         for traffic_light_actor in self.list_traffic_light_actor:
@@ -106,7 +105,10 @@ def main():
     # Env.setTrafficLightRedTime()
     
     # Env.allGreen()
-    Env.allRed()
+    
+    Env.setTrafficLightGroupGreen(Env.list_traffic_light_actor[0])
+    
+    # Env.allRed()
 
 if __name__ == '__main__':
     main()

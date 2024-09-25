@@ -39,12 +39,15 @@ class SUMO:
         return state
     
     def get_reward(self):
+        a = 1.001
         # 각 레인의 차량 대기시간 t
         # 지정한 구역에서 인식이 시작된 프레임부터 사라지는 프레임까지의 프레임 수의 차이
-        a = 1.001
-        t = 1
+        t1 = 1
+        t2 = 1
+        t3 = 1
+        t4 = 1
         
-        reward = -a ** t
+        reward = -((a ** t1) + (a ** t2) + (a ** t3) + (a ** t4))
         return reward
     
     def is_done(self):

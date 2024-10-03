@@ -27,7 +27,89 @@ from carla import VehicleLightState as vls
 
 import argparse
 import logging
+import numpy as np
 from numpy import random
+
+import carla
+import time
+from collections import deque
+import cv2
+
+IM_WIDTH = 640
+IM_HEIGHT = 480
+
+REPLAY_BUFFER = 5000
+MIN_REPLAY_BUFFER = 1000
+
+MINIBATCH_SIZE = 16
+PREDICTION_BATCH_SIZE = 1
+TRAINING_BATCH_SIZE = MINIBATCH_SIZE
+
+MODEL_NAME = "Sequential"
+
+EPISODES = 5
+EPISODE_TIME = 30 + 11
+STEP_DELAY_TIME = 0.1
+
+DISCOUNT = 0.99
+EPSILON = 1
+EPSILON_DECAY = 0.95
+MIN_EPSILON = 0.001
+
+class IntersectionMonitor:
+    
+    def __init__(self):
+        self.client = carla.Client("localhost", 2000)
+        self.client.set_timeout(10.0)
+        self.world = self.client.get_world()
+        self.blueprint_library = self.world.get_blueprint_library()
+
+        # Camera settings
+        self.im_width = IM_WIDTH
+        self.im_height = IM_HEIGHT
+        self.cameras = []
+        self.actor_list = []
+
+        # Store the images from each camera
+        self.camera_images = [None, None, None, None]
+
+    def setup_cameras(self, camera_positions):
+        """Set up four cameras at the given positions."""
+        for i, pos in enumerate(camera_positions):
+            cam_bp = self.blueprint_library.find('sensor.camera.rgb')
+            cam_bp.set_attribute("image_size_x", f"{self.im_width}")
+            cam_bp.set_attribute("image_size_y", f"{self.im_height}")
+            cam_bp.set_attribute("fov", "110")
+            
+            transform = carla.Transform(carla.Location(x=pos[0], y=pos[1], z=pos[2]),
+                                        carla.Rotation(pitch=pos[3], yaw=pos[4], roll=pos[5]))
+            camera = self.world.spawn_actor(cam_bp, transform)
+            self.actor_list.append(camera)
+            self.cameras.append(camera)
+            camera.listen(lambda data, idx=i: self.process_image(data, idx))
+
+    def process_image(self, image, camera_index):
+        """Process the image from the camera and store it."""
+        i = np.array(image.raw_data)
+        i2 = i.reshape((self.im_height, self.im_width, 4))
+        i3 = i2[:, :, :3]  # RGB 값 추출
+        i3 = cv2.cvtColor(i3, cv2.COLOR_BGR2GRAY)  # 필요하다면 흑백 이미지로 변환
+        i3 = i3 / 255.0  # 정규화
+        self.camera_images[camera_index] = i3
+
+    def reset(self):
+        """Reset the camera images and set up the environment."""
+        self.camera_images = [None, None, None, None]
+        # Set up initial state if necessary
+
+    def destroy_actors(self):
+        """Destroy all actors."""
+        for actor in self.actor_list:
+            actor.destroy()
+
+    def get_camera_images(self):
+        """Return the latest images from all cameras."""
+        return self.camera_images
 
 def get_actor_blueprints(world, filter, generation):
     bps = world.get_blueprint_library().filter(filter)
@@ -54,6 +136,8 @@ def get_actor_blueprints(world, filter, generation):
         return []
 
 def main():
+    start_time = time.time()
+    
     argparser = argparse.ArgumentParser(
         description=__doc__)
     argparser.add_argument(
@@ -70,7 +154,7 @@ def main():
     argparser.add_argument(
         '-n', '--number-of-vehicles',
         metavar='N',
-        default=30,
+        default=80,        # number of vehicles
         type=int,
         help='Number of vehicles (default: 30)')
     argparser.add_argument(
@@ -180,7 +264,7 @@ def main():
             if not settings.synchronous_mode:
                 synchronous_master = True
                 settings.synchronous_mode = True
-                settings.fixed_delta_seconds = 0.05
+                settings.fixed_delta_seconds = 0.03     # set delta second
             else:
                 synchronous_master = False
         else:
@@ -279,8 +363,11 @@ def main():
         for spawn_point in spawn_points:
             walker_bp = random.choice(blueprintsWalkers)
             # set as not invincible
+            probability = random.randint(0,100 + 1);
             if walker_bp.has_attribute('is_invincible'):
                 walker_bp.set_attribute('is_invincible', 'false')
+            if walker_bp.has_attribute('can_use_wheelchair') and probability < 11:
+                walker_bp.set_attribute('use_wheelchair', 'true')
             # set the max speed
             if walker_bp.has_attribute('speed'):
                 if (random.random() > percentagePedestriansRunning):
@@ -326,7 +413,6 @@ def main():
             world.tick()
 
         # 5. initialize each controller and set target to walk to (list is [controler, actor, controller, actor ...])
-        # set how many pedestrians can cross the road
         world.set_pedestrians_cross_factor(percentagePedestriansCrossing)
         for i in range(0, len(all_id), 2):
             # start walker
@@ -341,14 +427,51 @@ def main():
         # Example of how to use Traffic Manager parameters
         traffic_manager.global_percentage_speed_difference(30.0)
 
+        ################
+        # Camera setup #
+        ################
+        monitor = IntersectionMonitor()
+        # monitor.setup_cameras(camera_positions)
+
+        ########
+        # Step #
+        ########
+        def step(step_num):
+            print(f">> step {int(step_num / 10)}")
+            # TODO : DO SOMETHING
+            
+            if step_num / 10 - int(step_num / 10) == 0.0:
+                
+                monitor.setup_cameras(camera_positions)            
+                images = monitor.get_camera_images()
+                for idx, img in enumerate(images):
+                    if img is not None:
+                        # Save the image to a file
+                        cv2.imwrite(f"_out/camera_{idx+1}_frame_{step_num}.png", img)
+                        print("write image")
+                    else:
+                        print("none image")
+                
+            time.sleep(STEP_DELAY_TIME)
+
+        # TODO : loop for learning
+        step_num = 1
         while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time > EPISODE_TIME:
+                break   # clean up
             if not args.asynch and synchronous_master:
                 world.tick()
+                step(step_num)
+                step_num += 1
             else:
                 world.wait_for_tick()
+                step(step_num)
+                step_num += 1
+                
 
     finally:
-
+        print(">> clean up episode..")
         if not args.asynch and synchronous_master:
             settings = world.get_settings()
             settings.synchronous_mode = False
@@ -368,11 +491,34 @@ def main():
 
         time.sleep(0.5)
 
+
+
 if __name__ == '__main__':
 
-    try:
-        main()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        print('\ndone.')
+    camera_positions = [
+        [900, 1400, 600, -40, 180, 0],  # Camera 1
+        [-1400, 900, 600, -40, 90, 0],  # Camera 2
+        [-900, -1400, 600, -40, 0, 0],  # Camera 3
+        [1400, -900, 600, -40, -90, 0]   # Camera 4
+    ]
+    
+
+    # agent = DQNAgent()
+    reward_history = []
+    
+    for episode in range(EPISODES):
+        print(f">> Starting episode {episode + 1}")
+        
+        # if episode % 10 == 0:  # 10 에피소드마다 타겟 네트워크 동기화
+            # agent.sync_qnet()
+        try:
+            main()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            print('\ndone.')
+            
+        print(f">> Episode {episode + 1} completed.")
+        time.sleep(2)
+
+

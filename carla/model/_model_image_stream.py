@@ -106,4 +106,4 @@ class IntersectionMonitor:
             if img is not None:
                 cv2.imwrite(f"_out/camera_{idx+1}_frame_{self.frame+1}.png", img)
                 self.frame += 1
-        time.sleep(1)
+        # time.sleep(1)

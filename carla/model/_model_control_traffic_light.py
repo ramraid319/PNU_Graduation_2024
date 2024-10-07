@@ -77,15 +77,15 @@ class TrafficController:
         target_actor.set_state(carla.TrafficLightState.Red)
         print(f"\t\t>> {target_actor} : now red")
 
-    def setTrafficLightGroupGreen(self, target_actors):        
-        for target_actor in target_actors:
-            self.setTrafficLightGreen(self.list_traffic_light_actor[target_actor])
-            print(f"\t\t>> {target_actor} : now green")
+    def setTrafficLightGroupGreen(self, target_actors):
+        for i in target_actors:
+            self.setTrafficLightGreen(self.list_traffic_light_actor[i])
+            print(f"\t\t>> {i} : now green")
         
-    def setTrafficLightGroupRed(self, target_actors):
-        for target_actor in target_actors:
-            self.setTrafficLightRed(self.list_traffic_light_actor[target_actor])
-            print(f"\t\t>> {target_actor} : now red")
+    def setTrafficLightGroupGreen(self, target_actors):
+        for i in target_actors:
+            self.setTrafficLightRed(self.list_traffic_light_actor[i])
+            print(f"\t\t>> {i} : now red")
 
     def allGreen(self):
         for traffic_light_actor in self.list_traffic_light_actor:
@@ -133,7 +133,7 @@ def main():
         [8, 9]
     ]
     
-    Controller.setTrafficLightGroupGreen(target_actor_lists[1])
+    Controller.setTrafficLightGroupGreen(target_actor_lists[0])
 
 if __name__ == '__main__':
     main()

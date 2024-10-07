@@ -50,7 +50,7 @@ TRAINING_BATCH_SIZE = MINIBATCH_SIZE
 MODEL_NAME = "Sequential"
 
 EPISODES = 5
-EPISODE_TIME = 30 + 11
+EPISODE_TIME = 300 + 11
 STEP_DELAY_TIME = 0.1
 INITIAL_STEP = 10
 
@@ -383,8 +383,8 @@ def main():
             if step_num > INITIAL_STEP:
                 print(f">> step {int(step_num / 10)}")
                 # TODO : DO SOMETHING
-                monitor.save_images()
-                time.sleep(STEP_DELAY_TIME)
+                # monitor.save_images()
+                # time.sleep(STEP_DELAY_TIME)
 
         # TODO : loop for learning
         step_num = 1

@@ -2,12 +2,12 @@ import torch
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
-import QNetwork
-import ReplayBuffer
+from .QNetwork import *
+from .ReplayBuffer import *
 
 class Agent:
     def __init__(self, action_size, device, buffer_size=50000, batch_size=64, gamma=0.98, lr=0.001, epsilon_start=0.8, epsilon_end=0.01, epsilon_decay=0.995):
-        self.action_size = action_size
+        self.action_size = action_size  # 현재 sumo와 carla 모두 action_size 는 4가지로 고정됨
         self.buffer_size = buffer_size
         self.batch_size = batch_size
         self.gamma = gamma
@@ -18,9 +18,9 @@ class Agent:
 
         self.device = device
         
-        self.replay_buffer = ReplayBuffer(buffer_size, batch_size)
-        self.qnet = QNetwork(action_size).to(self.device)
-        self.qnet_target = QNetwork(action_size).to(self.device)
+        self.replay_buffer = ReplayBuffer(self.buffer_size, self.batch_size)
+        self.qnet = QNetwork(self.action_size).to(self.device)
+        self.qnet_target = QNetwork(self.action_size).to(self.device)
         self.optimizer = optim.Adam(self.qnet.parameters(), lr=self.lr)
 
     def get_action(self, state):
@@ -37,10 +37,10 @@ class Agent:
             return
 
         state, action, reward, next_state, done = self.replay_buffer.get_batch()
-        qs = self.qnet(state)
+        qs = self.qnet(state.to(self.device))
         q = qs[torch.arange(len(action)), action]
 
-        next_qs = self.qnet_target(next_state)
+        next_qs = self.qnet_target(next_state.to(self.device))
         next_q = next_qs.max(1)[0]
         next_q.detach()
         

@@ -5,7 +5,7 @@ import Simulator
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # 환경 및 학습된 에이전트 설정
-env = env = Simulator.make('SUMO')  # 또는 'CARLA'
+env = Simulator.make('SUMO')  # 또는 'CARLA'
 agent = DQN.Agent(action_size=4, device=device)
 
 # 학습된 모델 로드

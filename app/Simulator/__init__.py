@@ -1,5 +1,5 @@
-from .SUMO import SUMO
-from .CARLA import CARLA
+from .sumo_env.SUMO import SUMO
+from .carla_env.CARLA import CARLA
 
 def make(env_name):
     if env_name == 'SUMO':

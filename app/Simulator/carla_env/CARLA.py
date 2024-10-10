@@ -86,7 +86,7 @@ class Env:
         self.argparser.add_argument(
             '--filterv',
             metavar='PATTERN',
-            default='vehicle.cars',
+            default='vehicle.*',
             help='Filter vehicle model (default: "vehicle.*")')
         self.argparser.add_argument(
             '--generationv',
@@ -195,6 +195,8 @@ class Env:
         self.world.apply_settings(self.settings)
 
         self.blueprints = self.get_actor_blueprints(self.world, self.args.filterv, self.args.generationv)
+        ##### FILTER NO BICYCLE #####
+        self.blueprints = [x for x in self.blueprints if int(x.get_attribute('number_of_wheels')) == 4]
         if not self.blueprints:
             raise ValueError("Couldn't find any vehicles with the specified filters")
         self.blueprintsWalkers = self.get_actor_blueprints(self.world, self.args.filterw, self.args.generationw)
@@ -641,7 +643,7 @@ class CARLA:
         self.env = Env()
 
         self.monitor = IntersectionMonitor()
-
+        self.monitor.setup_cameras()
 
     def start(self):
         # 시뮬레이터 환경설정 및 가동
@@ -650,10 +652,7 @@ class CARLA:
 
         self.env.world.tick()
 
-        self.monitor.setup_cameras()
-
         self.lastAction = -1
-
 
         self.t_north = 0
         self.t_east = 0

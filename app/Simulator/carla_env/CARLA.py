@@ -39,6 +39,7 @@ TICK_NUM = 100
 GLOBAL_TICK_LIMIT = 200
 
 TRAFFIC_TICK_NUM = 70
+RANDOM_SPAWN_POINT_NUM = 4
 
 IM_WIDTH = 600
 IM_HEIGHT = 800
@@ -485,7 +486,7 @@ class Env:
         print("spawn??")
         targetSpawnPoints = self.world.get_map().get_spawn_points()
         # print(targetSpawnPoints)
-        for i, targetSpawnPoint in enumerate(random.choice(targetSpawnPoints, 1)):
+        for i, targetSpawnPoint in enumerate(random.choice(targetSpawnPoints, RANDOM_SPAWN_POINT_NUM, False)):
             self.blueprint = random.choice(self.blueprints)
             if self.blueprint.has_attribute('color'):
                 self.color = random.choice(self.blueprint.get_attribute('color').recommended_values)

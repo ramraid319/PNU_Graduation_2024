@@ -80,12 +80,13 @@ class Env:
             help='Number of walkers (default: 10)')
         self.argparser.add_argument(
             '--safe',
-            action='store_true',
+            default=True,
+            action='store_false',
             help='Avoid spawning vehicles prone to accidents')
         self.argparser.add_argument(
             '--filterv',
             metavar='PATTERN',
-            default='vehicle.*',
+            default='vehicle.cars',
             help='Filter vehicle model (default: "vehicle.*")')
         self.argparser.add_argument(
             '--generationv',
@@ -478,6 +479,32 @@ class Env:
             self.elapsed_global_tick += 1
             elapsed_tick += 1
 
+    def spawnRandom(self):
+        print("spawn??")
+        targetSpawnPoints = self.world.get_map().get_spawn_points()
+        # print(targetSpawnPoints)
+        for i, targetSpawnPoint in enumerate(random.choice(targetSpawnPoints, 1)):
+            self.blueprint = random.choice(self.blueprints)
+            if self.blueprint.has_attribute('color'):
+                self.color = random.choice(self.blueprint.get_attribute('color').recommended_values)
+                self.blueprint.set_attribute('color', self.color)
+            if self.blueprint.has_attribute('driver_id'):
+                self.driver_id = random.choice(self.blueprint.get_attribute('driver_id').recommended_values)
+                self.blueprint.set_attribute('driver_id', self.driver_id)
+            self.blueprint.set_attribute('role_name', 'autopilot')
+            self.batch.append(self.SpawnActor(self.blueprint, targetSpawnPoint)
+                .then(self.SetAutopilot(self.FutureActor, True, self.traffic_manager.get_port())))
+            self.vehicles_list.append(self.response.actor_id)
+            
+        # for self.response in self.client.apply_batch_sync(self.batch, self.synchronous_master):
+        for self.response in self.client.apply_batch_sync(self.batch, True):
+
+            if self.response.error:
+                logging.error(self.response.error)
+            else:
+                self.vehicles_list.append(self.response.actor_id)
+        print("spawn!!")
+
     def cleanUp(self):
         print(">> clean up episode..")
         if not self.args.asynch and self.synchronous_master:
@@ -674,6 +701,8 @@ class CARLA:
         elif action == 3:
             print(f"\t\t\t\t\t\t>>>> {self.lastAction} --> Traffic Control 03 <<<<")
             self.env.setTrafficLightPattern3()
+
+        self.env.spawnRandom()
 
         self.lastAction = action
 

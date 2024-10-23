@@ -1,45 +1,74 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class QNetwork(nn.Module):
+# class QNet(nn.Module):
+#     def __init__(self, action_size):
+#         super().__init__()
+
+#         self.conv1 = nn.Conv2d(1, 32, kernel_size=5, stride=2, padding=2)  # Input channels: 4 (color), Output: 32
+#         self.bn1 = nn.BatchNorm2d(32)
+#         self.conv2 = nn.Conv2d(32, 64, kernel_size=5, stride=2, padding=2)  # Output: 64
+#         self.bn2 = nn.BatchNorm2d(64)
+#         self.conv3 = nn.Conv2d(64, 128, kernel_size=5, stride=2, padding=2)  # Output: 128
+#         self.bn3 = nn.BatchNorm2d(128)
+
+        
+#         # Adjust size after conv layers based on input dimensions
+#         self.fc1 = nn.Linear(128 * 25 * 75, 512)  # 11x8 comes from the conv layers' output size
+#         self.fc2 = nn.Linear(512, action_size)  # Output size is the number of actions
+
+#     def forward(self, x):
+#         # x = x.permute(0, 3, 1, 2)  # Change to (batch_size, channels, height, width)
+#         x = F.relu(self.bn1(self.conv1(x)))
+#         x = F.relu(self.bn2(self.conv2(x)))
+#         x = F.relu(self.bn3(self.conv3(x)))
+        
+#         # print("Shape before flattening:", x.shape)  # Debug print
+
+#         x = torch.flatten(x, 1)  # Flatten the convolution output
+#         x = F.relu(self.fc1(x))
+#         x = self.fc2(x)  # Output layer
+    
+#         return x
+
+
+class QNet(nn.Module):
     def __init__(self, action_size):
-        super(QNetwork, self).__init__()
+        super().__init__()
 
-        self.layers = nn.ModuleList()
+        # Convolutional layers to process 200x600x1 input
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=8, stride=4, padding=2)  # Output: (32, 50, 150)
+        self.bn1 = nn.BatchNorm2d(32)
 
-        # Input channels
-        in_channels = 48
-        out_channels = 16  # Starting output channels
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=1)  # Output: (64, 25, 75)
+        self.bn2 = nn.BatchNorm2d(64)
 
-        # Reduce the number of convolutional layers
-        num_layers = 10  # Reduced from 20 to 10
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1)  # Output: (128, 13, 38)
+        self.bn3 = nn.BatchNorm2d(128)
 
-        for i in range(num_layers):
-            # Convolutional layer
-            conv = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1)
-            self.layers.append(conv)
-            self.layers.append(nn.BatchNorm2d(out_channels))
-            self.layers.append(nn.ReLU())
+        self.conv4 = nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1)  # Output: (256, 7, 19)
+        self.bn4 = nn.BatchNorm2d(256)
 
-            in_channels = out_channels  # Update input channels for the next layer
-
-            # Add Max Pooling every 4 layers and double the output channels
-            if (i + 1) % 4 == 0:
-                self.layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
-                out_channels *= 2  # Double the output channels
-
-                # Limit the doubling to avoid too many channels
-                if out_channels > 64:  # cap the output channels at 64
-                    out_channels = 64
-
-        # Calculate the output size after all convolutions and pooling
-        self.fc1 = nn.Linear(64 * 200 * 150, 512)  # Reduced fully connected layer size
-        self.fc2 = nn.Linear(512, action_size)
+        self.fc1 = nn.Linear(29184, 1024)  # First fully connected layer
+        self.fc2 = nn.Linear(1024, 512)  # Second fully connected layer
+        self.fc3 = nn.Linear(512, action_size)  # Output layer for Q-values (4 actions)
 
     def forward(self, x):
-        for layer in self.layers:
-            x = layer(x)
+        # Apply convolutional layers with ReLU activations
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = F.relu(self.bn3(self.conv3(x)))
+        x = F.relu(self.bn4(self.conv4(x)))
 
-        x = x.flatten(start_dim=1)
+        # Flatten the output from convolutional layers
+        x = x.view(x.size(0), -1)
+
+        # Fully connected layers with ReLU activations
         x = F.relu(self.fc1(x))
-        return self.fc2(x)
+        x = F.relu(self.fc2(x))
+
+        # Output Q-values for each action
+        x = self.fc3(x)
+        
+        return x

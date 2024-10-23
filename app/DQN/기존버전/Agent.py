@@ -5,54 +5,35 @@ import torch.optim as optim
 from .QNetwork import *
 from .ReplayBuffer import *
 
-epsilon_start = 1.0
-epsilon_end = 0.1
-epsilon_decay = 0.995
-
-# cuda_available = torch.cuda.is_available()
-# print(f"CUDA available: {cuda_available}")
-
-# if torch.cuda.is_available():
-#     device = torch.device('cuda')
-# else:
-#     device = torch.device('cpu')
-
-# print(device)
-
 class Agent:
-    def __init__(self, action_size, device, total_episodes):
-        self.gamma = 0.99  # 0.9
-        self.lr = 0.00025   # 0.0005
-        self.epsilon = epsilon_start   # 0.1
-        self.buffer_size = 50000   # 10000
-        self.batch_size =  64  #32
-        self.action_size = action_size  # <-- 2
-        self.device = device
+    def __init__(self, action_size, device, total_episodes, buffer_size=20000, batch_size=32, gamma=0.98, lr=0.001, epsilon_start=0.9, epsilon_end=0.1):
+        self.action_size = action_size  # 현재 sumo와 carla 모두 action_size 는 4가지로 고정됨
+        self.buffer_size = buffer_size
+        self.batch_size = batch_size
+        self.gamma = gamma
+        self.lr = lr
+        self.epsilon = epsilon_start
+        self.epsilon_start = epsilon_start
+        self.epsilon_end = epsilon_end
         self.total_episodes = total_episodes
 
-        self.replay_buffer = ReplayBuffer(self.buffer_size, self.batch_size, device)
-        self.qnet = QNet(self.action_size).float().to(device)
-        self.qnet_target = QNet(self.action_size).float().to(device)
+        self.device = device
+        
+        self.replay_buffer = ReplayBuffer(self.buffer_size, self.batch_size, self.device)
+        self.qnet = QNetwork(self.action_size).to(self.device)
+        self.qnet_target = QNetwork(self.action_size).to(self.device)
         self.optimizer = optim.Adam(self.qnet.parameters(), lr=self.lr)
 
     def get_action(self, state):
-        # if np.random.rand() < self.epsilon:
-        #     return np.random.choice(self.action_size)
-        # else:
-        #     state = torch.tensor(state[np.newaxis, :], dtype=torch.float32)
-            
-        #     self.qnet = self.qnet.float()  # ??
-        #     qs = self.qnet(state)
-        #     return qs.argmax().item()
-        
-        self.qnet.eval()  # Set to evaluation mode to prevent batch norm errors
-        with torch.no_grad():  # Disable gradient calculation for action selection
-            state = torch.tensor(state[np.newaxis, :], dtype=torch.float32).to(self.device)
+        self.qnet.eval()
+        with torch.no_grad():
+            # state = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
+            state = state.clone().detach().unsqueeze(0).float().to(self.device)
             qs = self.qnet(state)
-        self.qnet.train()  # Set back to training mode after inference
-        return qs.argmax().item() if np.random.rand() >= self.epsilon else np.random.choice(self.action_size)
+            del state
 
-        
+        self.qnet.train()
+        return qs.argmax().item() if np.random.rand() >= self.epsilon else np.random.choice(self.action_size)
 
     def update(self, state, action, reward, next_state, done):
         self.replay_buffer.add(state, action, reward, next_state, done)
@@ -65,8 +46,11 @@ class Agent:
 
         next_qs = self.qnet_target(next_state)
         next_q = next_qs.max(1)[0]
-
         next_q.detach()
+
+        del state
+        del next_state
+        
         target = reward + (1 - done) * self.gamma * next_q
 
         loss_fn = nn.MSELoss()
@@ -78,13 +62,11 @@ class Agent:
 
     def sync_qnet(self):
         self.qnet_target.load_state_dict(self.qnet.state_dict())
-        
+
     def decay_epsilon(self):
-        # Decay epsilon
-        if self.epsilon > epsilon_end:
-            self.epsilon *= epsilon_decay
-            
-        print(f"Epsilon: {self.epsilon:.3f}")
+        if self.epsilon > self.epsilon_end:
+            self.epsilon -= (self.epsilon_start - self.epsilon_end) / (self.total_episodes * 0.8)
+
 
     # Save model
     def save_model(self, path, current_episode):
@@ -98,6 +80,8 @@ class Agent:
         }, path)
 
         print("Model saved successfully.")
+        torch.load
+
 
     # Load model
     def load_model(self, path):

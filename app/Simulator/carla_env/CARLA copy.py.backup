@@ -5,7 +5,6 @@ import time
 # import random
 import torch
 import torchvision.transforms.functional as F
-import numpy as np
 
 from .enums import CAM_DIRECTION
 from .object_detection import *
@@ -32,13 +31,18 @@ from collections import deque
 import cv2
 
 TICK_NUM = 100
-GLOBAL_TICK_LIMIT = 3500   ## <<= 한 에피소드당 step 도는 수??
+GLOBAL_TICK_LIMIT = 3000   ## <<= 한 에피소드당 step 도는 수??
 
 MAX_VEHICLE_NUM = 400
 RANDOM_SPAWN_NUM = 1
-RANDOM_SPAWN_PROBABILITY = 0.15  # 0.12
-MAX_RANDOM_SPAWN_TICK = 130   # 150
+RANDOM_SPAWN_PROBABILITY = 0.8
+MAX_RANDOM_SPAWN_TICK = 100
 TRAFFIC_TICK_NUM = 70
+
+RANDOM_SPAWN_PROBABILITY_NORTH = 0.2
+RANDOM_SPAWN_PROBABILITY_SOUTH = 0.2
+RANDOM_SPAWN_PROBABILITY_EAST = 0.2
+RANDOM_SPAWN_PROBABILITY_WEST = 0.2
 
 IM_WIDTH = 600
 IM_HEIGHT = 800
@@ -87,7 +91,13 @@ class Env:
             [18, -5, 6, -55, 0, 0],  # Camera 3
             [-5, -18, 6, -55, -90, 0]   # Camera 4
         ]
-        # self.frame = 0
+        
+        self.road_spawn_points = [
+            [11, 0, 1],
+            [7, 6, 5],
+            [8, 9, 10],
+            [4, 3, 2]
+        ]
         
         self.blueprints = []
         self.blueprints = self.get_actor_blueprints(self.world, 'vehicle.*', 'All')
@@ -100,30 +110,14 @@ class Env:
         # self.number_of_vehicles = 40
         self.max_vehicles = 400
         self.spawn_points = self.world.get_map().get_spawn_points()
-    
+
         self.number_of_spawn_points = len(self.spawn_points)
-
-        self.spawn_probability_north_sr = RANDOM_SPAWN_PROBABILITY
-        self.spawn_probability_north_l = RANDOM_SPAWN_PROBABILITY
-        self.spawn_probability_south_sr = RANDOM_SPAWN_PROBABILITY
-        self.spawn_probability_south_l = RANDOM_SPAWN_PROBABILITY
-        self.spawn_probability_east_sr = RANDOM_SPAWN_PROBABILITY
-        self.spawn_probability_east_l = RANDOM_SPAWN_PROBABILITY
-        self.spawn_probability_west_sr = RANDOM_SPAWN_PROBABILITY
-        self.spawn_probability_west_l = RANDOM_SPAWN_PROBABILITY
-
-        self.spawn_probability_list = [RANDOM_SPAWN_PROBABILITY] * 8
-        self.spawn_probability_list[random.choice(range(8))] = 1
-
-        (self.spawn_probability_north_sr,
-        self.spawn_probability_north_l,
-        self.spawn_probability_south_sr,
-        self.spawn_probability_south_l,
-        self.spawn_probability_east_sr,
-        self.spawn_probability_east_l,
-        self.spawn_probability_west_sr,
-        self.spawn_probability_west_l) = self.spawn_probability_list
         
+        self.spawn_probability_north = RANDOM_SPAWN_PROBABILITY_NORTH
+        self.spawn_probability_south = RANDOM_SPAWN_PROBABILITY_SOUTH
+        self.spawn_probability_east = RANDOM_SPAWN_PROBABILITY_EAST
+        self.spawn_probability_west = RANDOM_SPAWN_PROBABILITY_WEST
+
         self.random_spawn_tick_each_spawn_points = [random.random_integers(0, MAX_RANDOM_SPAWN_TICK) for x in range(self.number_of_spawn_points)]
             
         self.im_width = IM_WIDTH
@@ -163,8 +157,16 @@ class Env:
 
         self.batch = []
 
-        print(self.spawn_probability_list)
+        self.spawn_probability_north = RANDOM_SPAWN_PROBABILITY_NORTH
+        self.spawn_probability_south = RANDOM_SPAWN_PROBABILITY_SOUTH
+        self.spawn_probability_east = RANDOM_SPAWN_PROBABILITY_EAST
+        self.spawn_probability_west = RANDOM_SPAWN_PROBABILITY_WEST
 
+        random_spawn_point = [self.spawn_probability_north, self.spawn_probability_south, self.spawn_probability_east, self.spawn_probability_west]
+        chosen_index = random.choice(range(4))
+        random_spawn_point[chosen_index] = 1
+
+        self.spawnTick = 0
         self.random_spawn_tick_each_spawn_points = [random.random_integers(0, MAX_RANDOM_SPAWN_TICK) for x in range(self.number_of_spawn_points)]
 
         print("\t\t>> getting Traffic Light Actors...")
@@ -295,55 +297,22 @@ class Env:
         while elapsed_tick < tick_num:
             print(f"\t\t>> tick : {elapsed_tick}\t\t>> global_tick : {self.elapsed_global_tick}")
             self.world.tick()
-            if (self.elapsed_global_tick + 1) % 1500 == 0:
-                random.shuffle(self.spawn_probability_list)
-
-                (self.spawn_probability_north_sr,
-                self.spawn_probability_north_l,
-                self.spawn_probability_south_sr,
-                self.spawn_probability_south_l,
-                self.spawn_probability_east_sr,
-                self.spawn_probability_east_l,
-                self.spawn_probability_west_sr,
-                self.spawn_probability_west_l) = self.spawn_probability_list
-
-                print(self.spawn_probability_list)
 
             for i, spawn_tick in enumerate(self.random_spawn_tick_each_spawn_points):
                 if self.elapsed_global_tick == spawn_tick:
-
-                    if self.spawn_probability_north_sr > random.random() and i in (11, 0):
+                    if RANDOM_SPAWN_PROBABILITY > random.uniform(0, 0.1):
                         self.spawnRandom(i)
+                    else:
+                        self.random_spawn_tick_each_spawn_points[i] += random.randint(30, MAX_RANDOM_SPAWN_TICK)
 
-                    if self.spawn_probability_north_l > random.random() and i == 1:
-                        self.spawnRandom(i)
 
-                    if self.spawn_probability_south_sr > random.random() and i in (7, 6):
-                        self.spawnRandom(i)
-
-                    if self.spawn_probability_south_l > random.random() and i == 5:
-                        self.spawnRandom(i)
-                    
-                    if self.spawn_probability_east_sr > random.random() and i in (8, 9):
-                        self.spawnRandom(i)
-
-                    if self.spawn_probability_east_l > random.random() and i == 10:
-                        self.spawnRandom(i)
-
-                    if self.spawn_probability_west_sr > random.random() and i in (4, 3):
-                        self.spawnRandom(i)
-
-                    if self.spawn_probability_west_l > random.random() and i == 2:
-                        self.spawnRandom(i)
-
-                    self.random_spawn_tick_each_spawn_points[i] += MAX_RANDOM_SPAWN_TICK
 
             self.elapsed_global_tick += 1
             elapsed_tick += 1
 
     def spawnRandom(self, i):
         self.batch = []
-        # self.random_spawn_tick_each_spawn_points[i] += 100 # random.randint(50, MAX_RANDOM_SPAWN_TICK)
+        self.random_spawn_tick_each_spawn_points[i] += random.randint(30, MAX_RANDOM_SPAWN_TICK)
 
         if len(self.vehicles_list) >= self.max_vehicles:
             print(f"Maximum number of vehicles ({self.max_vehicles}) already spawned.")
@@ -356,13 +325,41 @@ class Env:
             self.blueprint.set_attribute('color', self.color)
 
         self.blueprint.set_attribute('role_name', 'autopilot')
+        
 
-        self.batch.append(
-            self.SpawnActor(self.blueprint, self.spawn_points[i])
-                .then(self.SetAutopilot(self.FutureActor, True, self.traffic_manager.get_port()))
-        )
+        if i in [0, 1, 11]:
+            if self.spawn_probability_north > random.random():
+                self.batch.append(
+                    self.SpawnActor(self.blueprint, self.spawn_points[i])
+                        .then(self.SetAutopilot(self.FutureActor, True, self.traffic_manager.get_port()))
+                )
 
-        self.response = self.client.apply_batch_sync(self.batch, self.synchronous_master)
+        if i in [7, 6, 5]:
+            if self.spawn_probability_south > random.random():
+                self.batch.append(
+                    self.SpawnActor(self.blueprint, self.spawn_points[i])
+                        .then(self.SetAutopilot(self.FutureActor, True, self.traffic_manager.get_port()))
+                )
+
+        if i in [8, 9, 10]:
+            if self.spawn_probability_east > random.random():
+                self.batch.append(
+                    self.SpawnActor(self.blueprint, self.spawn_points[i])
+                        .then(self.SetAutopilot(self.FutureActor, True, self.traffic_manager.get_port()))
+                )
+
+        if i in [4, 3, 2]:
+            if self.spawn_probability_west > random.random():
+                self.batch.append(
+                    self.SpawnActor(self.blueprint, self.spawn_points[i])
+                        .then(self.SetAutopilot(self.FutureActor, True, self.traffic_manager.get_port()))
+                )
+
+        if self.batch == []:
+            print(f"not spawned..")
+            return
+        else:
+            self.response = self.client.apply_batch_sync(self.batch, self.synchronous_master)
 
         if self.response[0].error:
             logging.error(self.response[0].error)
@@ -401,35 +398,31 @@ class CARLA:
         self.env = Env()
         self.ObjectTracking = ObjectTracking()
         self.total_sum_lasted_frames = 0
-        self.currentAction = 0
 
     def start(self):
         self.env.main()
 
         self.lastAction = -1
-        self.currentAction = 0
 
         self.ObjectTracking.start()
         self.total_sum_lasted_frames = 0
 
         print(f"\t\t\t>> start.. <<")
-        self.env.world.tick(200)
+        self.env.world.tick(50)
         self.env.allRed()
 
         state = self.get_state()
         return state
 
     def step(self, action):
-
         if self.lastAction == -1:
             pass
-        elif self.lastAction != action:
-            self.env.allRed()  ## "노란불" 역할
-            for i in range(20):
-                self.env.Tick(4)
-                self.update_total_sum_lasted_frames(True)
 
-        self.currentAction = action
+        elif self.lastAction != action:
+            self.env.allRed()
+            for i in range(15):
+                self.env.Tick(4)
+                self.update_total_sum_lasted_frames()
 
         print()
 
@@ -467,12 +460,12 @@ class CARLA:
 
         print()
 
+        self.lastAction = action
+
         next_state = self.get_state()
         reward = self.get_reward()
         done = self.is_done()
         
-        self.lastAction = action
-
         return next_state, reward, done
     
     def get_state(self):
@@ -482,8 +475,7 @@ class CARLA:
         # 기본 신호 길이 틱 진행
         for i in range(15):
             self.env.Tick(4)
-
-            self.update_total_sum_lasted_frames(False)
+            self.update_total_sum_lasted_frames()
 
         # get_image (4 * H * W)
         image_array = self.env.get_images()
@@ -499,7 +491,7 @@ class CARLA:
         # print(state.shape)
         return state
     
-    def update_total_sum_lasted_frames(self, yellowFlag):
+    def update_total_sum_lasted_frames(self):
         image_array = []
         image_array = self.env.get_images()         
 
@@ -509,7 +501,7 @@ class CARLA:
         sum = 0
 
         for cam_direction in CAM_DIRECTION:
-            sum_lasted_frames, frame = self.ObjectTracking.calculate_lasted_frames(image_array[i], cam_direction=cam_direction, frame_interval=4, currentAction = self.currentAction, yellowFlag=yellowFlag, prevAction=self.lastAction)  
+            sum_lasted_frames, frame = self.ObjectTracking.calculate_lasted_frames(image_array[i], cam_direction=cam_direction, frame_interval=4)  
             frames_for_display_list.append(frame)
             sum += sum_lasted_frames
             i += 1

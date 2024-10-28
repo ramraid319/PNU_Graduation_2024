@@ -7,7 +7,7 @@ import traci
 class SUMO:
     def __init__(self):
         # self.config
-        self.sumo_config = "./cross.sumocfg"
+        self.sumo_config = "Simulator\sumo_env\cross.sumocfg"
         self.sumo_binary = sumolib.checkBinary('sumo-gui')  # sumo 실행 파일 경로 설정
         self.sumo_process = None
         self.prev_action = -1    
@@ -165,7 +165,7 @@ class SUMO:
         
         reward = self.get_reward()
         done = self.is_done()
-        return next_state, reward, done, {}
+        return next_state, reward, done
     
     def get_state(self):
         # Implement the logic to get the current state of the environment
@@ -230,3 +230,7 @@ class SUMO:
         if self.sumo_process is not None:
             traci.close()
             self.sumo_process = None
+
+    def reset(self):
+   
+        return

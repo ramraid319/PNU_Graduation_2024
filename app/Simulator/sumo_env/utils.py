@@ -1,5 +1,7 @@
 import io
 import tempfile
+
+import torch
 import traci
 import random
 import sumolib
@@ -12,6 +14,7 @@ from PIL import Image
 from OpenGL import GL
 from io import BytesIO
 import mss
+import torchvision.transforms.functional as F
 
 junction_id = "6" # 실제 교차로 ID로 변경해야 함
 stop_simulation = False # 전역 변수를 사용하여 시뮬레이션 중지 신호
@@ -21,7 +24,7 @@ flag = 0
 
 # SUMO 실행 파일 경로 및 설정 파일 경로
 sumoBinary = sumolib.checkBinary('sumo-gui')  # sumo 실행 파일 경로 설정
-sumoCmd = [sumoBinary, "-c", "cross.sumocfg"]  # sumo 설정 파일 경로 설정
+sumoCmd = [sumoBinary, "-c", "Simulator\sumo_env\cross.sumocfg"]  # sumo 설정 파일 경로 설정
 
 
  # 방법1. 각 route에 랜덤한 flow를 설정하는 방식으로 rou.xml 파일 생성
@@ -38,7 +41,7 @@ def generateRandomRoutes1():
     probability = 0.03 / len(vehicle_types)  # 분할된 확률 
     # 밀도 조정: 이 확률 값은 시뮬레이션의 차량 밀도를 조정하는 데 사용. 값이 클수록 시뮬레이션에 더 많은 차량이 생성되고, 작을수록 차량이 적게 생성
 
-    with open("random_routes.rou.xml", "w") as f:
+    with open("Simulator\sumo_env\\random_routes.rou.xml", "w") as f:
         f.write('<routes>\n')
         
         # Define vehicle types
@@ -182,7 +185,7 @@ def generateRandomRoutes2():
     vehicles.sort(key=lambda x: x[0])
 
     # Write to XML file
-    with open("random_routes.rou.xml", "w") as f:
+    with open("Simulator\sumo_env\\random_routes.rou.xml", "w") as f:
         f.write('<routes>\n')
         f.write(vehicle_types_definition)
         f.write(routes_definition)
@@ -337,7 +340,7 @@ def getSimStatebyImage():
         
         if (flag == 100):
             image = Image.fromarray(image_array)
-            image.save("sumo_screenshot_before_before.png")
+            image.save("Simulator\sumo_env\sumo_screenshot_before_before.png")
 
         # The `mss` screenshot contains 4 channels (RGBA), so we can discard the alpha channel
         image_array = image_array[..., :3]  # Keep only the RGB channels
@@ -347,7 +350,7 @@ def getSimStatebyImage():
 
         if (flag == 100):
             # image = Image.fromarray(image_array)
-            image.save("sumo_screenshot_before.png")
+            image.save("Simulator\sumo_env\sumo_screenshot_before.png")
 
         # 3. Preprocess the image
         # Resize the image to match the input shape of the CNN
@@ -359,21 +362,30 @@ def getSimStatebyImage():
         
         if (flag == 100):
             # image = Image.fromarray(image_array)
-            image.save("sumo_screenshot_after.png")
+            image.save("Simulator\sumo_env\sumo_screenshot_after.png")
         flag += 1   
 
         # Convert the image back to a NumPy array
         image_array = np.array(image)
     
         # Normalize pixel values to be between 0 and 1
-        image_array = image_array / 255.0
+        # image_array = image_array / 255.0
     
         # Add an extra dimension to match the input shape of the CNN
         # (80, 80, 1) if grayscale, or (80, 80, 3) for RGB images
         image_array = np.expand_dims(image_array, axis=-1)
+
+
+        img_tensor = torch.tensor(image_array, dtype=torch.uint8).permute(2, 0, 1)
+        img_tensor = F.resize(img_tensor, (200, 600))
     
+        if (flag == 100):
+            pil_image = Image.fromarray(img_tensor.squeeze(0).numpy(), mode='L')
+
+            pil_image.save("Simulator\sumo_env\sumo_screenshot_after_after.png")
+
         # 4. Return the preprocessed image
-        return image_array   # (80, 80, 1) is returned!
+        return img_tensor   # (80, 80, 1) is returned!
 
 def grab_framebuffer():
     # Define the size of the viewport (window size of SUMO GUI)

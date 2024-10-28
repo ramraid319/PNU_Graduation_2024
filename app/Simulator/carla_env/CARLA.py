@@ -32,7 +32,7 @@ from collections import deque
 import cv2
 
 TICK_NUM = 100
-GLOBAL_TICK_LIMIT = 3500   ## <<= 한 에피소드당 step 도는 수??
+GLOBAL_TICK_LIMIT = 3500   ## 한 에피소드당 tick수
 
 MAX_VEHICLE_NUM = 400
 RANDOM_SPAWN_NUM = 1

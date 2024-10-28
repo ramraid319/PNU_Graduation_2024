@@ -8,8 +8,9 @@ import matplotlib.pyplot as plt
 import Simulator
 from datetime import datetime
 
-env_name = 'CARLA'  # 또는 'CARLA'
-total_episodes = 2000 # default : 1000https://chatgpt.com/
+env_name = 'SUMO'  # 'SUMO' 또는 'CARLA'
+test_fixed_signals = True  # 'True': to run fixed traffic signals / 'False': to run traffic signal inference by trained DQN model
+total_episodes = 2000 # default : 100
 action_size = 4  # 환경에 맞는 액션 크기 설정
 start_episode = 0
 
@@ -22,7 +23,7 @@ agent = DQN.Agent(action_size, device=device)
 reward_history = []
 
 # Load the trained model for inference
-agent.load_model('dqn_model.pth')
+agent.load_model(f"results\{env_name.lower()}\\training\dqn_model.pth")
 
 # 그래프 설정
 plt.ion()
@@ -58,7 +59,7 @@ def save_graph(reward_history):
     ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))  # Ensure x-axis values are integers
 
     # Save the figure as a high-resolution image
-    plt.savefig('dqn_total_rewards_inference.png', bbox_inches='tight', dpi=300)  # Save with tight bounding box
+    plt.savefig(f'results\{env_name.lower()}\inference\dqn_total_rewards_inference.png', bbox_inches='tight', dpi=300)  # Save with tight bounding box
 
 
 def write_to_file(filename, data_list):
@@ -85,14 +86,15 @@ try:
         
         i = 0
         ## 48 24 48 24  / 12 = 4 2 4 2
-        fixed_signals = [0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 3, 3]
+        fixed_signals_pattern = [0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 3, 3]
 
         while not done:
-            action = agent.get_action(state)
+            if test_fixed_signals == True:
+                action = fixed_signals_pattern[i]
+                i = (i+1) % len(fixed_signals_pattern)
+            else:
+                action = agent.get_action(state)
 
-            # action = fixed_signals[i]
-            # i = (i+1) % len(fixed_signals)
-            
             next_state, reward, done = env.step(action)
             state = next_state
             total_reward += reward
@@ -129,7 +131,7 @@ finally:
 
 if len(reward_history) > 0:
     save_graph(reward_history)
-    write_to_file('reward_history_inference.txt', reward_history)
+    write_to_file(f'results\{env_name.lower()}\inference\\reward_history_inference.txt', reward_history)
 
 plt.ioff()
 print("[ To End the program, please close <Figure 1> window. ]")

@@ -13,12 +13,12 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(f"Now the machine learning will utilize [{device}] on this PC.")
 
 # 파라미터 설정
-env_name = 'CARLA'  # 또는 'CARLA'
-total_episodes = 2000 # default : 1000https://chatgpt.com/
+env_name = 'SUMO'  # 'SUMO' 또는 'CARLA'
+total_episodes = 2000 # default : 1000
 sync_interval = 100   ###   10  ?????
 action_size = 4  # 환경에 맞는 액션 크기 설정
-save_interval = 20  # Save every N episodes
-model_save_path = "dqn_model.pth"
+save_interval = 1  # Save model to file every N episodes
+model_save_path = f"results\{env_name.lower()}\\training\dqn_model.pth"
 old_episodes_count = 0
 start_episode = 0
 # 환경 및 에이전트 설정
@@ -26,14 +26,6 @@ env = Simulator.make(env_name)
 agent = DQN.Agent(action_size, device, total_episodes)
 
 reward_history = []
-
-# # # 그래프 설정
-# plt.ion()
-# fig, ax = plt.subplots()
-# line, = ax.plot([], [])
-# plt.xlabel('Episode')
-# plt.ylabel('Total Reward')
-# plt.title('Live Updating Graph of Total Reward')
 
 # 그래프 설정
 plt.ion()
@@ -113,7 +105,7 @@ def save_graph(reward_history):
     ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))  # Ensure x-axis values are integers
 
     # Save the figure as a high-resolution image
-    plt.savefig('dqn_total_rewards_training.png', bbox_inches='tight', dpi=300)  # Save with tight bounding box
+    plt.savefig(f'results\{env_name.lower()}\\training\dqn_total_rewards_training.png', bbox_inches='tight', dpi=300)  # Save with tight bounding box
 
 
 def write_to_file(filename, data_list):
@@ -162,6 +154,8 @@ def write_to_file(filename, data_list):
 #     agent.decay_epsilon()
 
 #     torch.save(agent.qnet.state_dict(), 'model.pth')
+
+
 episode_count = 0
 try:
     for current_episode in range(start_episode, total_episodes):
@@ -239,7 +233,7 @@ finally:
 
 if len(reward_history) > 0:
     save_graph(reward_history)
-    write_to_file('reward_history.txt', reward_history)
+    write_to_file(f'results\{env_name.lower()}\\training\\reward_history_training.txt', reward_history)
 
 plt.ioff()
 print("[ To End the program, please close <Figure 1> window. ]")

@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import Simulator
 from datetime import datetime
 
-env_name = 'SUMO'  # 'SUMO' 또는 'CARLA'
-test_fixed_signals = True  # 'True': to run fixed traffic signals / 'False': to run traffic signal inference by trained DQN model
+env_name = 'CARLA'  # 'SUMO' 또는 'CARLA'
+test_fixed_signals = False  # 'True': to run fixed traffic signals / 'False': to run traffic signal inference by trained DQN model
 total_episodes = 2000 # default : 100
 action_size = 4  # 환경에 맞는 액션 크기 설정
 start_episode = 0

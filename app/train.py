@@ -13,11 +13,11 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(f"Now the machine learning will utilize [{device}] on this PC.")
 
 # 파라미터 설정
-env_name = 'SUMO'  # 'SUMO' 또는 'CARLA'
+env_name = 'CARLA'  # 'SUMO' 또는 'CARLA'
 total_episodes = 2000 # default : 1000
 sync_interval = 100   ###   10  ?????
 action_size = 4  # 환경에 맞는 액션 크기 설정
-save_interval = 1  # Save model to file every N episodes
+save_interval = 10  # Save model to file every N episodes
 model_save_path = f"results\{env_name.lower()}\\training\dqn_model.pth"
 old_episodes_count = 0
 start_episode = 0

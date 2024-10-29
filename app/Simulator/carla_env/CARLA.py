@@ -32,12 +32,12 @@ from collections import deque
 import cv2
 
 TICK_NUM = 100
-GLOBAL_TICK_LIMIT = 3500   ## 한 에피소드당 tick수
+GLOBAL_TICK_LIMIT = 3600   ## 한 에피소드당 tick수
 
 MAX_VEHICLE_NUM = 400
 RANDOM_SPAWN_NUM = 1
-RANDOM_SPAWN_PROBABILITY = 0.15  # 0.12
-MAX_RANDOM_SPAWN_TICK = 130   # 150
+RANDOM_SPAWN_PROBABILITY = 0.1  # 0.12
+MAX_RANDOM_SPAWN_TICK = 50   # 150
 TRAFFIC_TICK_NUM = 70
 
 IM_WIDTH = 600
@@ -82,10 +82,10 @@ class Env:
         ]
         
         self.camera_positions = [
-            [-18, 5, 6, -55, 180, 0],  # Camera 1
-            [5, 18, 6, -55, 90, 0],  # Camera 2
-            [18, -5, 6, -55, 0, 0],  # Camera 3
-            [-5, -18, 6, -55, -90, 0]   # Camera 4
+            [-15, 5, 9, -50, 180, 0],  # Camera 1
+            [5, 15, 9, -50, 90, 0],  # Camera 2
+            [15, -5, 9, -50, 0, 0],  # Camera 3
+            [-5, -15, 9, -50, -90, 0]   # Camera 4
         ]
         # self.frame = 0
         
@@ -113,7 +113,8 @@ class Env:
         self.spawn_probability_west_l = RANDOM_SPAWN_PROBABILITY
 
         self.spawn_probability_list = [RANDOM_SPAWN_PROBABILITY] * 8
-        self.spawn_probability_list[random.choice(range(8))] = 1
+
+        self.shock = True
 
         (self.spawn_probability_north_sr,
         self.spawn_probability_north_l,
@@ -136,7 +137,7 @@ class Env:
             cam_bp = self.blueprint_library.find('sensor.camera.rgb')
             cam_bp.set_attribute("image_size_x", f"{self.im_width}")
             cam_bp.set_attribute("image_size_y", f"{self.im_height}")
-            cam_bp.set_attribute("fov", "90")
+            cam_bp.set_attribute("fov", "70")
             
             transform = carla.Transform(carla.Location(x=pos[0], y=pos[1], z=pos[2]),
                                         carla.Rotation(pitch=pos[3], yaw=pos[4], roll=pos[5]))
@@ -292,11 +293,14 @@ class Env:
 
     def Tick(self, tick_num = TICK_NUM):
         elapsed_tick = 0
+        
         while elapsed_tick < tick_num:
             print(f"\t\t>> tick : {elapsed_tick}\t\t>> global_tick : {self.elapsed_global_tick}")
             self.world.tick()
-            if (self.elapsed_global_tick + 1) % 1500 == 0:
-                random.shuffle(self.spawn_probability_list)
+            
+            
+            if (self.elapsed_global_tick) % 900 == 0 and self.shock:
+                self.spawn_probability_list[random.choice(range(8))] = 1
 
                 (self.spawn_probability_north_sr,
                 self.spawn_probability_north_l,
@@ -306,6 +310,24 @@ class Env:
                 self.spawn_probability_east_l,
                 self.spawn_probability_west_sr,
                 self.spawn_probability_west_l) = self.spawn_probability_list
+
+                self.shock = False
+
+                print(self.spawn_probability_list)
+
+            elif (self.elapsed_global_tick) % 300 == 0 and not self.shock:
+                self.spawn_probability_list = [RANDOM_SPAWN_PROBABILITY] * 8
+
+                (self.spawn_probability_north_sr,
+                self.spawn_probability_north_l,
+                self.spawn_probability_south_sr,
+                self.spawn_probability_south_l,
+                self.spawn_probability_east_sr,
+                self.spawn_probability_east_l,
+                self.spawn_probability_west_sr,
+                self.spawn_probability_west_l) = self.spawn_probability_list
+                
+                self.shock = True
 
                 print(self.spawn_probability_list)
 
@@ -396,11 +418,11 @@ class Env:
 class CARLA:
     def __init__(self):
 
-        self.a = 1.5
+        self.a = 1.0004
         self.lastAction = -1
         self.env = Env()
         self.ObjectTracking = ObjectTracking()
-        self.total_sum_lasted_frames = 0
+        self.sum_lasted_frames_by_lanes_whole = []
         self.currentAction = 0
 
     def start(self):
@@ -410,7 +432,8 @@ class CARLA:
         self.currentAction = 0
 
         self.ObjectTracking.start()
-        self.total_sum_lasted_frames = 0
+        self.sum_lasted_frames_by_lanes_whole = []
+
 
         print(f"\t\t\t>> start.. <<")
         self.env.world.tick(200)
@@ -427,7 +450,7 @@ class CARLA:
             self.env.allRed()  ## "노란불" 역할
             for i in range(20):
                 self.env.Tick(4)
-                self.update_total_sum_lasted_frames(True)
+                self.update_traffic_status(yellowFlag=True)
 
         self.currentAction = action
 
@@ -480,10 +503,10 @@ class CARLA:
         image_tensors = []
 
         # 기본 신호 길이 틱 진행
-        for i in range(15):
+        for i in range(10):
             self.env.Tick(4)
 
-            self.update_total_sum_lasted_frames(False)
+            self.update_traffic_status(yellowFlag=False)
 
         # get_image (4 * H * W)
         image_array = self.env.get_images()
@@ -491,30 +514,33 @@ class CARLA:
         for image in image_array:
 
             img_tensor = torch.tensor(image, dtype=torch.uint8).permute(2, 0, 1)
-            img_tensor = F.resize(img_tensor, (200, 150))
+            img_tensor = F.resize(img_tensor, (256, 192))
             img_tensor = F.rgb_to_grayscale(img_tensor)
             image_tensors.append(img_tensor)
 
-        state = torch.cat(image_tensors, 2)
+        top_row = torch.cat((image_tensors[0], image_tensors[1]), dim=2) 
+        bottom_row = torch.cat((image_tensors[2], image_tensors[3]), dim=2) 
+        state = torch.cat((top_row, bottom_row), dim=1) 
         # print(state.shape)
         return state
     
-    def update_total_sum_lasted_frames(self, yellowFlag):
+    def update_traffic_status(self, yellowFlag):
         image_array = []
         image_array = self.env.get_images()         
 
         frames_for_display_list = []
 
         i = 0
-        sum = 0
+        temp = []
+        self.sum_lasted_frames_by_lanes_whole = []
 
         for cam_direction in CAM_DIRECTION:
-            sum_lasted_frames, frame = self.ObjectTracking.calculate_lasted_frames(image_array[i], cam_direction=cam_direction, frame_interval=4, currentAction = self.currentAction, yellowFlag=yellowFlag, prevAction=self.lastAction)  
+            sum_lasted_frames_by_lanes_partial, frame = self.ObjectTracking.calculate_lasted_frames(image_array[i], cam_direction=cam_direction, frame_interval=4, currentAction = self.currentAction, yellowFlag=yellowFlag, prevAction=self.lastAction)  
             frames_for_display_list.append(frame)
-            sum += sum_lasted_frames
+            temp.extend(sum_lasted_frames_by_lanes_partial)
             i += 1
 
-        self.total_sum_lasted_frames = sum
+        self.sum_lasted_frames_by_lanes_whole = temp
 
         top_row = np.hstack((frames_for_display_list[0], frames_for_display_list[1]))
         bottom_row = np.hstack((frames_for_display_list[2], frames_for_display_list[3]))
@@ -534,7 +560,21 @@ class CARLA:
         # return reward  
 
     def get_reward(self):
-        reward = -1 * self.total_sum_lasted_frames
+        sum = 0
+        for lasted_frames in self.sum_lasted_frames_by_lanes_whole:
+            sum += lasted_frames
+        total_sum_lasted_frames = sum 
+
+        reward = -1 * total_sum_lasted_frames
+
+
+        # lasted_frames_NS_SR = self.sum_lasted_frames_by_lanes_whole[1] + self.sum_lasted_frames_by_lanes_whole[2] +self.sum_lasted_frames_by_lanes_whole[7] + self.sum_lasted_frames_by_lanes_whole[8]
+        # lasted_frames_NS_L= self.sum_lasted_frames_by_lanes_whole[0] + self.sum_lasted_frames_by_lanes_whole[6]
+        # lasted_frames_EW_SR= self.sum_lasted_frames_by_lanes_whole[4] + self.sum_lasted_frames_by_lanes_whole[5] +self.sum_lasted_frames_by_lanes_whole[10] + self.sum_lasted_frames_by_lanes_whole[11]
+        # lasted_frames_EW_L= self.sum_lasted_frames_by_lanes_whole[3] + self.sum_lasted_frames_by_lanes_whole[9]
+
+        # reward = -((self.a ** lasted_frames_NS_SR) + (self.a ** lasted_frames_NS_L) + (self.a ** lasted_frames_EW_SR) + (self.a ** lasted_frames_EW_L))
+
         return reward
 
     def get_reward_count(self):

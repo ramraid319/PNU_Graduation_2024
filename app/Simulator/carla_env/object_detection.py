@@ -21,8 +21,8 @@ allowed_class_ids = [0, 1, 2, 3, 5, 7]
 vehicle_class_ids = [1, 2, 3, 5, 7]
     
 # Initialize YOLOv8 model
-model_path = 'models/yolov8m.pt'
-model = Yolov8DetectionModel(model_path=model_path, device='cuda', confidence_threshold = 0.4)  # 0.3
+model_path = 'models/yolov8l.pt'
+model = Yolov8DetectionModel(model_path=model_path, device='cuda', confidence_threshold = 0.35)  # 0.3
 # model = YOLO(model_path)
 
 args = argparse.Namespace(track_thresh=0.3, match_thresh=0.6, track_buffer=30, mot20=False)  # Set this to True if you're using the MOT20 dataset
@@ -431,11 +431,25 @@ class ObjectTracking:
         
         # print("\t\t>> preprocess_frame...", end="")
         # frame, roi_polygon_points_straight_and_right, roi_polygon_points_left = self.preprocess_frame(cam_direction, image_array)
-        roi_polygon_points_whole_lanes = np.array([(255, 26),(334, 26),(598, 516),(598, 799),(1, 800),(2, 370)])        
+        roi_polygon_points_whole_lanes = np.array([(229, 21),(358, 21),(595, 595),(597, 797),(2, 797),(2, 462)])        
         roi_polygon_whole_lanes = Polygon(roi_polygon_points_whole_lanes)
 
+        roi_polygon_points_lane1 = np.array([(315, 21),(353, 21),(598, 580),(598, 798),(398, 799)])     ## 상단 21픽셀   
+        roi_polygon_lane1 = Polygon(roi_polygon_points_lane1)  
+
+        roi_polygon_points_lane2 = np.array([(281, 21),(315, 21),(399, 799),(171, 798)])     ## 상단 21픽셀   
+        roi_polygon_lane2 = Polygon(roi_polygon_points_lane2)
+
+        roi_polygon_points_lane3 = np.array([(234, 21),(282, 21),(172, 799),(1, 798),(2, 437)])     ## 상단 21픽셀   
+        roi_polygon_lane3 = Polygon(roi_polygon_points_lane3)
+
+
+
         # Draw the ROI on the frame (optional, for visualization)
-        cv2.polylines(frame, [roi_polygon_points_whole_lanes], isClosed=True, color=(255, 0, 0), thickness = 2)
+        cv2.polylines(frame, [roi_polygon_points_lane1], isClosed=True, color=(255, 0, 0), thickness = 2)
+        cv2.polylines(frame, [roi_polygon_points_lane2], isClosed=True, color=(0, 255, 0), thickness = 2)
+        cv2.polylines(frame, [roi_polygon_points_lane3], isClosed=True, color=(0, 0, 255), thickness = 2)
+
         # cv2.putText(frame, f'ROI:SR', (258, 77 - 4), cv2.FONT_HERSHEY_DUPLEX, 0.4, (255, 0, 0), 1) # {score:.2f}
 
         # cv2 uses (B,G,R), while numpy uses (R,G,B)
@@ -521,8 +535,8 @@ class ObjectTracking:
                 pt2 = (int(xmax) - 10, int(ymax) - 10)
 
                 # # yolo sahi detection 결과를 노란색 박스로 그리기
-                # cv2.rectangle(img=frame, pt1=pt1, pt2=pt2, color=(100, 255, 255), thickness=1)
-                # cv2.putText(frame, 'det', (pt2[0], pt2[1] + 3), cv2.FONT_HERSHEY_DUPLEX, 0.4, (100, 255, 255), 1)
+                cv2.rectangle(img=frame, pt1=pt1, pt2=pt2, color=(100, 255, 255), thickness=1)
+                cv2.putText(frame, '', (pt2[0], pt2[1] + 3), cv2.FONT_HERSHEY_DUPLEX, 0.4, (100, 255, 255), 1)
                 
         cv2.putText(frame, f"{cam_direction.name}", (10, 40), cv2.FONT_HERSHEY_DUPLEX, 1.3, (255, 255, 255), 2)
 
@@ -538,7 +552,7 @@ class ObjectTracking:
                 img_size=[frame.shape[0], frame.shape[1]]
             )
 
-        sum_lasted_frames = 0
+        sum_lasted_frames_by_lanes = [0,0,0]
         
         # Loop through tracked objects and draw bounding boxes with track IDs
         for track in online_targets:
@@ -555,23 +569,31 @@ class ObjectTracking:
             # Check if the center of the bounding box is inside the ROI polygon
             bbox_center = Point(bbox_center_x, bbox_center_y)
 
-            sum_lasted_frames += lasted_frames
+            # 교차로 진입하는 방향에서 봤을때 가장 왼쪽 차선(1차선) : lane1, 중앙차선(2차선) : lane2, 가장 우측 차선(3차선) : lane3
+            if roi_polygon_lane1.contains(bbox_center):
+                sum_lasted_frames_by_lanes[0] += lasted_frames
+            elif roi_polygon_lane2.contains(bbox_center):
+                sum_lasted_frames_by_lanes[1] += lasted_frames
+            elif roi_polygon_lane3.contains(bbox_center):
+                sum_lasted_frames_by_lanes[2] += lasted_frames
 
             # Draw bounding box and track ID
             cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 170), 2)
             text_size, _ = cv2.getTextSize('ID{track_id}({lasted_frames}fr)', cv2.FONT_HERSHEY_DUPLEX, 0.6, 1)
             textlen = len('ID{track_id}({lasted_frames}fr)')/10
-            cv2.rectangle(frame, (bbox[0],bbox[1]), (int(bbox[0]+textlen*40-15), int(bbox[1]-text_size[1]*1.2)), (0,0,0,0.5), -1)
+            cv2.rectangle(frame, (bbox[0],bbox[1]), (int(bbox[0]+textlen*40-12), int(bbox[1]-text_size[1]*1.2)), (0,0,0,0.5), -1)
 
             cv2.putText(frame, f'ID{track_id}({lasted_frames}fr)', (bbox[0], bbox[1] - 3), cv2.FONT_HERSHEY_DUPLEX, 0.6, (255, 255, 255), 1) # {score:.2f}
 
 
-        cv2.putText(frame, f"sum_lasted_frs: {sum_lasted_frames}", (10, 60), cv2.FONT_HERSHEY_DUPLEX, 0.6, (255, 255, 255), 1)
+        cv2.putText(frame, f"{sum_lasted_frames_by_lanes[2]}fr", (11, 765), cv2.FONT_HERSHEY_DUPLEX, 0.6, (255, 255, 255), 1)
+        cv2.putText(frame, f"{sum_lasted_frames_by_lanes[1]}fr", (226, 765), cv2.FONT_HERSHEY_DUPLEX, 0.6, (255, 255, 255), 1)
+        cv2.putText(frame, f"{sum_lasted_frames_by_lanes[0]}fr", (491, 765), cv2.FONT_HERSHEY_DUPLEX, 0.6, (255, 255, 255), 1)
 
 
         resized_image = cv2.resize(frame, (513, 684))
 
-        return sum_lasted_frames, resized_image
+        return sum_lasted_frames_by_lanes, resized_image
         
         
         # print()

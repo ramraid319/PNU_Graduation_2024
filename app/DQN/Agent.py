@@ -5,9 +5,9 @@ import torch.optim as optim
 from .QNetwork import *
 from .ReplayBuffer import *
 
-epsilon_start = 1.0
+epsilon_start = 0.9
 epsilon_end = 0.1
-epsilon_decay = 0.995
+epsilon_decay = 0.997
 
 # cuda_available = torch.cuda.is_available()
 # print(f"CUDA available: {cuda_available}")
@@ -22,7 +22,7 @@ epsilon_decay = 0.995
 class Agent:
     def __init__(self, action_size, device, total_episodes):
         self.gamma = 0.99  # 0.9
-        self.lr = 0.00025   # 0.0005
+        self.lr = 0.0001   # 0.0005
         self.epsilon = epsilon_start   # 0.1
         self.buffer_size = 50000   # 10000
         self.batch_size =  64  #32

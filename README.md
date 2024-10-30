@@ -31,11 +31,11 @@
 
 &nbsp;
 
+- Python
+- PyTorch
 - 교통 시뮬레이터 : [CARLA Simulator](https://carla.org/), [SUMO Simulator](https://eclipse.dev/sumo/)
 - 객체 탐지 모델 : [YOLOv8](https://docs.ultralytics.com/models/yolov8/)
 - 객체 추적 알고리즘 : [ByteTrack](https://github.com/ifzhang/ByteTrack)
-- Python
-- PyTorch
 
 &nbsp;
 ---------------------------------------

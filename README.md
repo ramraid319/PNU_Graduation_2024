@@ -175,7 +175,7 @@ Editor의 컨텐츠 브라우저의 루트 경로에, map_package가 생성되�
 - sumo 1.20.0
 - numpy 1.23.5
   
-이하는 PC환경 및 GPU에 따라 버전을 맞추어 설치해야함
+*이하는 PC환경 및 GPU에 따라 버전을 맞추어 설치해야함
 (아래는 Windows10, Nvidia GPU 8.6 (RTX 3060) 환경의 경우)
 
 - cuda 11.8
@@ -245,7 +245,6 @@ Ctrl + C 시 학습 또는 추론이 중단되며, Total Reward 창을 닫으면
 ```
 python control.py --simulator carla
 // or python control.py -s carla
-
 ```
 
 실행시 위의 모델 학습과 동일한 창들이 켜지며, 이번에는 미리 학습된 모델이 교차로의 신호를 제어하는 것을 볼 수 있다. 
@@ -324,7 +323,7 @@ python control.py --simulator sumo --fixed
 // or python control.py -s sumo -f
 ```
 
-또는 학습한 모델과의 비교를 위해 고정 주기식 신호로 테스트를 할 수 있다.
+또는 학습한 모델과의 비교를 위해 고정주기식 신호로 테스트를 할 수 있다.
 
 Ctrl + C 시 학습 또는 추론이 중단되며, Total Reward 창을 닫으면 프로그램이 종료된다.
 
@@ -344,4 +343,4 @@ Ctrl + C 시 학습 또는 추론이 중단되며, Total Reward 창을 닫으면
 - CARLA 시뮬레이터로 교차로 환경을 구현하고 API 제작
 
 **정하립 201924578 (jeonghalib@gmail.com)**
-- YOLOv8과 ByteTracker를 활용한 Reward 계산 알고리즘 제작
+- SUMO 교차로 환경구현 및 객체탐지 모델을 활용한 Reward 알고리즘 제작

@@ -207,6 +207,7 @@ app 폴더로 이동한다.
 
 ```
 python train.py --simulator carla
+// or python train.py -s carla
 ```
 
 실행 시 시뮬레이션 창에서 시뮬레이션이 시작되고, 카메라 뷰 창과 Total Reward 창이 켜진다.
@@ -239,13 +240,27 @@ Ctrl + C 시 학습 또는 추론이 중단되며, Total Reward 창을 닫으면
 
 **모델 추론**
 
+1. 학습한 모델로 추론
+   
 ```
 python control.py --simulator carla
+// or python control.py -s carla
+
 ```
 
 실행시 위의 모델 학습과 동일한 창들이 켜지며, 이번에는 미리 학습된 모델이 교차로의 신호를 제어하는 것을 볼 수 있다. 
 
 이에 대한 Reward도 마찬가지로 Total Reward창에 나타난다.
+
+
+2. 고정주기식 신호로 제어 (모델 미사용, 고정주기식 제어)
+   
+```
+python control.py --simulator carla --fixed
+// or python control.py -s carla -f
+```
+
+또는 학습한 모델과의 비교를 위해 고정주기식 신호로 테스트를 할 수 있다.
 
 Ctrl + C 시 학습 또는 추론이 중단되며, Total Reward 창을 닫으면 프로그램이 종료된다.
 
@@ -267,6 +282,7 @@ app 폴더로 이동한다.
 
 ```
 python train.py --simulator sumo
+// or python train.py -s sumo
 ```
 
 실행 시 시뮬레이션 창과 Total Reward 창이 켜진다.
@@ -290,13 +306,25 @@ Ctrl + C 시 학습 또는 추론이 중단되며, Total Reward 창을 닫으면
 
 **모델 추론**
 
+1. 학습한 모델로 추론
+   
 ```
-python control.py --simulator sumo 
+python control.py --simulator sumo
+// or python control.py -s sumo 
 ```
 
 실행 시 위의 모델 학습과 동일한 창들이 켜지며, 이번에는 미리 학습된 모델이 교차로의 신호를 제어하는 것을 볼 수 있다. 
 
 이에 대한 Reward도 마찬가지로 Total Reward창에 나타난다.
+
+2. 고정 주기식 신호로 추론 (모델 미사용, 고정주기식 제어)
+   
+```
+python control.py --simulator sumo --fixed
+// or python control.py -s sumo -f
+```
+
+또는 학습한 모델과의 비교를 위해 고정 주기식 신호로 테스트를 할 수 있다.
 
 Ctrl + C 시 학습 또는 추론이 중단되며, Total Reward 창을 닫으면 프로그램이 종료된다.
 

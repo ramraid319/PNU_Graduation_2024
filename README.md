@@ -1,27 +1,23 @@
 # 강화학습기반 교차로 동적 신호제어시스템
 
+&nbsp;
 
 ### 1. 프로젝트 소개
 
-본 프로젝트는 강화학습을 통해 교차로의 신호를 최적화하는 프로젝트이다.
-
-#### 1.1. 배경
-
-국내에서 가장 일반적으로 사용하는 시스템은 "시간제어식 신호"이다. 이는 특정 상황별로 주기를 미리 지정해두고, 해당 상황이 발생하면 인위적인 조작을 통해 적용하는 방식이다. 하지만 기본적으로 정해진 고정된 여러 옵션에서 단순히 선택을 하는 방식이기 때문에, 정밀한 최적화가 힘들고, 인위적인 제어가 필요하기 때문에 실시간으로 대응하기에는 한계가 있다.
+국내에서 가장 일반적으로 사용하는 교차로 신호제어 시스템은 "시간제어식 신호"이다. 이는 특정 상황별로 주기를 미리 지정해두고, 해당 상황이 발생하면 인위적인 조작을 통해 적용하는 방식이다. 하지만 기본적으로 미리 정해진 여러 옵션에서 단순히 선택을 하는 방식이기 때문에 정밀한 최적화가 힘들고, 인위적인 제어가 필요하기 때문에 실시간으로 변하는 교통량에 대응하는데 한계가 있다.
 
 즉, 현재의 시스템에는 아래와 같은 문제가 있다.
 - 교통 상황을 반영하지 못하는 불합리한 차량대기 시간
 - 고정된 순서로만 진행되는 신호 체계
-- 현행 신호 체계의 효율성과 유연성 부족
+- 신호 제어의 효율성과 유연성 부족
 
+&nbsp;
 
-#### 1.2. 목표
-
-본 프로젝트에서는 강화학습(DQN)을 사용하여 교차로 신호체계를 최적화한다.
+따라서 이러한 문제를 해결하기 위해, 본 프로젝트에서는 **강화학습을 활용하여 동적인 신호제어 시스템**을 개발하였다.
 
 - 불필요한 대기시간을 최소화하는 합리적 신호체계 구현
+- 불규칙하게 증감하는 교통량에도 대응할 수 있는 신호체계 구현
 - 동적인 신호순서를 적용하여 효율성 증대
-- 여러 교차로의 교통상황을 고려한 실시간 최적화
 
 &nbsp;
 ---------------------------------------
@@ -40,9 +36,9 @@
 
 #### 3.2. 사용 기술
 
-- 교차로 구현 시뮬레이터 : CARLA, SUMO Simulator
-- 객체 탐지 모델 : YOLOv8
-- 객체 추적 알고리즘 : ByteTrack(https://github.com/ifzhang/ByteTrack)
+- 교통 시뮬레이터 : [CARLA Simulator](https://carla.org/), [SUMO Simulator](https://eclipse.dev/sumo/)
+- 객체 탐지 모델 : [YOLOv8](https://docs.ultralytics.com/models/yolov8/)
+- 객체 추적 알고리즘 : [ByteTrack](https://github.com/ifzhang/ByteTrack)
 - Python
 - PyTorch
 
@@ -60,6 +56,8 @@
 * 최소 6GB 이상의 GPU
 * 2000, 2001 TCP 포트
 
+&nbsp;
+
 **소프트웨어 요구사항**
 
 * CMake: 빌드 파일을 생성하기 위해 필요. version >= 3.15
@@ -69,12 +67,16 @@
 * Python3 x64: 다른 버전이나 x32 버전은 제거 권장
 * [Windows 8.1 SDK](https://developer.microsoft.com/ko-kr/windows/downloads/sdk-archive/)
 
+&nbsp;
+
 **Visual Studio 2019**
 * C++를 사용한 데스크톱 개발
   * MSVC v140 -VS 2015 C++ 빌드 도구(v14.00)
 * C++를 사용한 게임 개발
 * x64 Visual C++ Toolset
 * .Net framework 4.6.2 개발 도구
+
+&nbsp;
 
 **Python Dependencies**
 ```
@@ -84,9 +86,11 @@ pip3 install --user setuptools
 pip3 install --user wheel
 ```
 
+&nbsp;
+
 **Unreal Engine**
 
-먼저, 언리얼 엔진을 포크하여 다운로드하기 위해서는 Github 계정이 언리얼 엔진과 연동되어 있어야 합니다. 자세한 내용은 아래 링크를 확인해주세요.
+먼저, 언리얼 엔진을 포크하여 다운로드하기 위해서는 Github 계정이 언리얼 엔진과 연동되어 있어야 한다. 자세한 내용은 아래 링크에서 확인할 수 있다.
 [Accessing Unreal Engine Source](https://www.unrealengine.com/en-US/ue-on-github)
 
 1. 언리얼 엔진 소스코드 클론
@@ -94,7 +98,7 @@ pip3 install --user wheel
 git clone --depth 1 -b carla https://github.com/CarlaUnreal/UnrealEngine.git .
 ```
 
-언리얼 엔진의 경로는 C:\\\\로 하는것을 권장합니다.
+언리얼 엔진의 경로는 C:\\\\로 하는것을 권장한다.
 
 2. Configuration Script 실행
 ```
@@ -108,6 +112,8 @@ GenerateProjectFiles.bat
    - Solution Explorer에서 UE4를 우클릭 후 빌드
 
 4. 컴파일이 성공적으로 되었는지 확인하려면 Engine\Binaries\Win64\UE4Editor.exe 을 실행
+
+&nbsp;
 
 **Carla 빌드**
 
@@ -130,7 +136,10 @@ Update.bat
 4. Carla 빌드
 **x64 Native Tools Command Prompt for VS 2019**를 실행한다.
 
+&nbsp;
+
 **Python API 클라이언트 컴파일**
+
 Carla의 루트 경로에서 아래 명령어를 실행한다.
 
 ```
@@ -138,6 +147,8 @@ make PythonAPI
 ```
 
 PythonAPI/carla/dist 폴더에 .egg 파일과 .whl 파일이 생성되었는지 확인한다.
+
+&nbsp;
 
 **서버 컴파일**
 
@@ -160,6 +171,8 @@ make import
 
 Editor의 컨텐츠 브라우저의 루트 경로에, map_package가 생성되었다면 성공적으로 import된 것이다.
 
+&nbsp;
+
 #### 4.2. 기타 S/W 및 라이브러리 설치
 
 - SUMO simulator <https://sumo.dlr.de/docs/Downloads.php>
@@ -167,7 +180,7 @@ Editor의 컨텐츠 브라우저의 루트 경로에, map_package가 생성되�
 - sumo 1.20.0
 - numpy 1.26.4
   
-이하는 pc환경 및 gpu 에 따라 버전을 맞추어 설치해야함
+이하는 PC환경 및 GPU에 따라 버전을 맞추어 설치해야함
 (아래는 Windows10, Nvidia GPU 8.6 (RTX 3060) 환경의 경우)
 
 - cuda 11.8
@@ -181,6 +194,8 @@ Editor의 컨텐츠 브라우저의 루트 경로에, map_package가 생성되�
 
 #### 5.1. CARLA 시뮬레이터를 사용한 모델 학습 및 추론
 
+&nbsp;
+
 **맵 지정**
 
 컨텐츠 브라우저의 map_package의 cross_01.umap 파일을 연다.
@@ -193,10 +208,12 @@ Editor의 컨텐츠 브라우저의 루트 경로에, map_package가 생성되�
 cd app
 ```
 
+&nbsp;
+
 **모델 학습**
 
 ```
-python train.py --simulator carla     // 학습
+python train.py --simulator carla
 ```
 
 실행 시 시뮬레이션 창에서 시뮬레이션이 시작되고, 카메라 뷰 창과 Total Reward 창이 켜진다.
@@ -220,11 +237,12 @@ Ctrl + C 시 학습 또는 추론이 중단되며, Total Reward 창을 닫으면
 
     app > results > carla > training
    
+&nbsp;
 
 **모델 추론**
 
 ```
-python control.py --simulator carla    // 추론
+python control.py --simulator carla
 ```
 
 실행시 위의 모델 학습과 동일한 창들이 켜지며, 이번에는 미리 학습된 모델이 교차로의 신호를 제어하는 것을 볼 수 있다. 
@@ -236,8 +254,8 @@ Ctrl + C 시 학습 또는 추론이 중단되며, Total Reward 창을 닫으면
 종료 시 Total Reward 그래프와 해당 Total Reward들의 실제 값을 기록한 텍스트파일이 아래 위치에 저장된다.
 
     app > results > carla > inference
-    
 
+&nbsp;
 
 #### 5.2. SUMO 시뮬레이터를 사용한 모델 학습 및 추론
 
@@ -248,10 +266,12 @@ Ctrl + C 시 학습 또는 추론이 중단되며, Total Reward 창을 닫으면
 cd app
 ```
 
+&nbsp;
+
 **모델 학습**
 
 ```
-python train.py --simulator sumo     // 학습
+python train.py --simulator sumo
 ```
 
 실행 시 시뮬레이션 창과 Total Reward 창이 켜진다.
@@ -270,11 +290,12 @@ Ctrl + C 시 학습 또는 추론이 중단되며, Total Reward 창을 닫으면
 
     app > results > sumo > training
    
+&nbsp;
 
 **모델 추론**
 
 ```
-python control.py --simulator sumo      // 추론
+python control.py --simulator sumo 
 ```
 
 실행 시 위의 모델 학습과 동일한 창들이 켜지며, 이번에는 미리 학습된 모델이 교차로의 신호를 제어하는 것을 볼 수 있다. 
